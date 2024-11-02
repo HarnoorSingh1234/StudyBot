@@ -1,0 +1,19 @@
+{
+  "name": "studybotbackend",
+  "version": "1.0.0",
+  "description": "studybot",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "author": "Harnoor Singh",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "firebase-admin": "^12.7.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.8.0"
+  }
+}
