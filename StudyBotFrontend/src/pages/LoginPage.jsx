@@ -1,19 +1,29 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+
+    // Mock login process (you would replace this with an actual API call)
     console.log("Logging in with:", { username, password });
+
+    try {
+      // Mock successful login response with userId
+      const userId = '12345'; // Replace this with actual user ID from backend
+
+      // Redirect to the user's dashboard
+      navigate(`/user/${userId}/dashboard`);
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
   };
 
-  return (<>
-    
-  
-    
+  return (
     <div className="flex items-center justify-center min-h-screen bg-black text-gray-200">
       <div className="w-full max-w-md p-8 space-y-6 bg-gray-900 rounded-lg shadow-lg border border-gray-700">
         <h2 className="text-3xl font-semibold text-center text-blue-400">Login</h2>
@@ -63,7 +73,7 @@ function LoginPage() {
           </Link>
         </div>
       </div>
-    </div></>
+    </div>
   );
 }
 

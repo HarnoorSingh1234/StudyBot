@@ -1,14 +1,28 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 function SignupPage() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const navigate = useNavigate();
 
-  const handleSignup = (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
-    console.log("Signing up with:", { username, email, password });
+
+    // Simulate signup process (you would replace this with an actual API call)
+    try {
+      // Mock API response
+      const userId = '12345'; // Assume userId is returned from the API after signup
+
+      // Log user information (for development purposes)
+      console.log("Signing up with:", { username, email, password });
+
+      // Redirect to the dashboard with userId
+      navigate(`/user/${userId}/dashboard`);
+    } catch (error) {
+      console.error("Signup failed:", error);
+    }
   };
 
   return (

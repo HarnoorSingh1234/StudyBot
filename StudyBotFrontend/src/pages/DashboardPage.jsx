@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect, useContext } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import {
   LineChart,
   Line,
@@ -9,12 +9,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-
-// Mock data for courses and progress graph
-const courses = [
-  { id: 'cpp', name: "C++ Basics", progress: 70 },
-  { id: 'python', name: "Python for Beginners", progress: 40 },
-];
+import { UserTaskContext } from '../contexts/UserTaskContext';
+import { TasksContext } from '../contexts/TasksContext';
 
 const progressData = [
   { date: '2023-10-01', cppProgress: 20, pythonProgress: 10 },
@@ -34,13 +30,24 @@ const studySessions = {
 };
 
 function DashboardPage() {
+  const { tasks } = useContext(TasksContext); // General task data for all users
+  const { userTasks } = useContext(UserTaskContext); // User-specific task progress data
+  const { userId } = useParams();
   const [userCourses, setUserCourses] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState('10');
   const [selectedYear, setSelectedYear] = useState('2023');
 
   useEffect(() => {
-    setUserCourses(courses);
-  }, []);
+    // If tasks are not available, add mock courses for Python and C++
+    if (!tasks || tasks.length === 0) {
+      setUserCourses([
+        { id: 'cpp', name: 'C++ Course' },
+        { id: 'python', name: 'Python Course' },
+      ]);
+    } else {
+      setUserCourses(tasks);
+    }
+  }, [tasks]);
 
   const generateCalendarDays = () => {
     const days = [];
@@ -56,29 +63,58 @@ function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-black text-gray-200 p-8 space-y-12">
-      <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-500 to-teal-400 bg-clip-text text-transparent tracking-wide text-center mb-12">My Dashboard</h2>
+      <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-500 to-teal-400 bg-clip-text text-transparent tracking-wide text-center mb-12">
+        My Dashboard
+      </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-7xl mx-auto">
         {/* Course Progress Section */}
         <div className="space-y-8">
           {userCourses.map((course) => (
-            <div key={course.id} className={`bg-gray-900 p-6 rounded-lg shadow-lg border ${course.id === 'python' ? 'border-yellow-500' : 'border-blue-500'} space-y-4`}>
-              <h3 className={`text-2xl font-semibold ${course.id === 'python' ? 'text-yellow-400' : 'text-blue-400'}`}>{course.name}</h3>
+            <div
+              key={course.id}
+              className={`bg-gray-900 p-6 rounded-lg shadow-lg border ${
+                course.id === 'python' ? 'border-yellow-500' : 'border-blue-500'
+              } space-y-4`}
+            >
+              <h3
+                className={`text-2xl font-semibold ${
+                  course.id === 'python' ? 'text-yellow-400' : 'text-blue-400'
+                }`}
+              >
+                {course.name}
+              </h3>
               <div className="progress-bar-container bg-gray-700 h-4 rounded-full overflow-hidden">
                 <div
-                  className={`${course.id === 'python' ? 'bg-yellow-500' : 'bg-blue-500'} h-full transition-width duration-300`}
-                  style={{ width: `${course.progress}%` }}
+                  className={`${
+                    course.id === 'python' ? 'bg-yellow-500' : 'bg-blue-500'
+                  } h-full transition-width duration-300`}
+                  style={{ width: `${userTasks[course.id]?.progress || 0}%` }}
                 ></div>
               </div>
-              <p className="text-gray-400">{course.progress}% completed</p>
+              <p className="text-gray-400">
+                {userTasks[course.id]?.progress || 0}% completed
+              </p>
               <div className="flex space-x-4">
-                <Link to={`/course/${course.id}`}>
-                  <button className={`w-full px-4 py-2 mt-4 text-gray-200 bg-black border ${course.id === 'python' ? 'border-yellow-500 hover:text-yellow-400' : 'border-blue-500 hover:text-blue-400'} rounded-md transition duration-300`}>
+                <Link to={`/user/${userId}/course/${course.id}`}>
+                  <button
+                    className={`w-full px-4 py-2 mt-4 text-gray-200 bg-black border ${
+                      course.id === 'python'
+                        ? 'border-yellow-500 hover:text-yellow-400'
+                        : 'border-blue-500 hover:text-blue-400'
+                    } rounded-md transition duration-300`}
+                  >
                     Continue Course
                   </button>
                 </Link>
-                <Link to={`/${course.id}/results`}>
-                  <button className={`w-full px-4 py-2 mt-4 text-gray-200 bg-black border ${course.id === 'python' ? 'border-yellow-500 hover:text-yellow-400' : 'border-blue-500 hover:text-blue-400'} rounded-md transition duration-300`}>
+                <Link to={`/user/${userId}/course/${course.id}/results`}>
+                  <button
+                    className={`w-full px-4 py-2 mt-4 text-gray-200 bg-black border ${
+                      course.id === 'python'
+                        ? 'border-yellow-500 hover:text-yellow-400'
+                        : 'border-blue-500 hover:text-blue-400'
+                    } rounded-md transition duration-300`}
+                  >
                     View Overall Results
                   </button>
                 </Link>
@@ -89,22 +125,41 @@ function DashboardPage() {
 
         {/* Progress Graph with Calendar */}
         <div className="bg-gray-900 p-6 rounded-lg shadow-lg border border-white">
-          <h3 className="text-2xl font-semibold text-blue-400 mb-4">Progress Over Time</h3>
+          <h3 className="text-2xl font-semibold text-blue-400 mb-4">
+            Progress Over Time
+          </h3>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={progressData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+            <LineChart
+              data={progressData}
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="gray" />
               <XAxis dataKey="date" stroke="gray" />
               <YAxis stroke="gray" />
               <Tooltip />
-              <Line type="monotone" dataKey="cppProgress" stroke="#3b82f6" strokeWidth={2} name="C++ Progress" />
-              <Line type="monotone" dataKey="pythonProgress" stroke="#fcd34d" strokeWidth={2} name="Python Progress" />
+              <Line
+                type="monotone"
+                dataKey="cppProgress"
+                stroke="#3b82f6"
+                strokeWidth={2}
+                name="C++ Progress"
+              />
+              <Line
+                type="monotone"
+                dataKey="pythonProgress"
+                stroke="#fcd34d"
+                strokeWidth={2}
+                name="Python Progress"
+              />
             </LineChart>
           </ResponsiveContainer>
 
           {/* Month and Year Selection */}
           <div className="flex items-center justify-between mt-8 mb-4">
             <div className="flex items-center space-x-4">
-              <label htmlFor="month" className="text-blue-400">Month:</label>
+              <label htmlFor="month" className="text-blue-400">
+                Month:
+              </label>
               <select
                 id="month"
                 value={selectedMonth}
@@ -119,7 +174,9 @@ function DashboardPage() {
               </select>
             </div>
             <div className="flex items-center space-x-4">
-              <label htmlFor="year" className="text-blue-400">Year:</label>
+              <label htmlFor="year" className="text-blue-400">
+                Year:
+              </label>
               <select
                 id="year"
                 value={selectedYear}
@@ -127,7 +184,9 @@ function DashboardPage() {
                 className="bg-black border border-gray-600 text-gray-200 rounded p-1"
               >
                 {[2021, 2022, 2023, 2024].map((year) => (
-                  <option key={year} value={year}>{year}</option>
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
                 ))}
               </select>
             </div>
@@ -139,10 +198,15 @@ function DashboardPage() {
               <div
                 key={day.date}
                 className={`w-6 h-6 rounded-sm ${
-                  day.studyLevel === 1 ? 'bg-green-600' :
-                  day.studyLevel === 2 ? 'bg-green-500' :
-                  day.studyLevel === 3 ? 'bg-green-400' :
-                  day.studyLevel === 4 ? 'bg-green-300' : 'bg-gray-700'
+                  day.studyLevel === 1
+                    ? 'bg-green-600'
+                    : day.studyLevel === 2
+                    ? 'bg-green-500'
+                    : day.studyLevel === 3
+                    ? 'bg-green-400'
+                    : day.studyLevel === 4
+                    ? 'bg-green-300'
+                    : 'bg-gray-700'
                 }`}
                 title={`Date: ${day.date} | Study Level: ${day.studyLevel}`}
               ></div>

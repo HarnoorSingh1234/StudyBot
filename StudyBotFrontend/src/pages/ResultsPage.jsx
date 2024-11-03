@@ -3,7 +3,7 @@ import GaugeChart from 'react-gauge-chart';
 import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
 
 function ResultsPage() {
-  const { course, taskId } = useParams();
+  const { course, taskId, userId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -69,7 +69,7 @@ function ResultsPage() {
             <h3 className={`text-2xl font-semibold ${themeColor} mb-2`}>Optimal Solution</h3>
             <pre className="text-sm text-gray-300 bg-gray-900 p-4 rounded-md">{optimalSolution}</pre>
             
-            {/* Toggle Arrow Icon */}
+            {/* Toggle Explanation */}
             <div
               onClick={() => setShowExplanation(!showExplanation)}
               className={`cursor-pointer flex items-center mt-4 text-white ${hoverColor} transition-colors`}
@@ -88,7 +88,7 @@ function ResultsPage() {
 
             {/* Explanation Section */}
             {showExplanation && (
-              <div className="bg-gray-900 p-4 text-sm  rounded-lg border border-gray-700 mt-4">
+              <div className="bg-gray-900 p-4 text-sm rounded-lg border border-gray-700 mt-4">
                 <ul className="text-white text-sm space-y-2">
                   {explanation.map((line, index) => (
                     <li key={index}>{line}</li>
@@ -137,14 +137,14 @@ function ResultsPage() {
       <div className="flex space-x-4 mt-6">
         <button
           className="px-4 py-2 bg-black text-gray-200 border border-white rounded-md hover:border-blue-500 transition duration-300 text-sm"
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate(`/user/${userId}/dashboard`)}
         >
           Back to Dashboard
         </button>
 
         <Link
-          to={`/${course}/results`}
-          className={`px-4 py-2 bg-black text-gray-200 border ${borderColor} rounded-md hover:${themeColor} transition duration-300 text-sm`}
+          to={`/user/${userId}/course/${course}/results`}
+          className={`px-4 py-2 bg-black text-gray-200 border ${borderColor} rounded-md transition duration-300 text-sm ${hoverColor}`}
         >
           Go to Overall Results
         </Link>

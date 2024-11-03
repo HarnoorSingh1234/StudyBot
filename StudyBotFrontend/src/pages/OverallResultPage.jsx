@@ -30,7 +30,7 @@ const courseResultsData = {
 };
 
 function OverallResultPage() {
-  const { course } = useParams();
+  const { course, userId } = useParams();
   const [tasks, setTasks] = useState([]);
   const [overallSuggestions, setOverallSuggestions] = useState([]);
   const [averageScore, setAverageScore] = useState(0);
@@ -92,7 +92,7 @@ function OverallResultPage() {
                 Status: {task.completionStatus ? 'Completed' : 'Incomplete'}
               </p>
             </div>
-            <Link to={`/course/${course}/task/${task.id}`}>
+            <Link to={`/user/${userId}/course/${course}/result/task/${task.id}`}>
               <button className={`px-4 py-2 text-gray-200 bg-black border ${borderColor} rounded-md hover:${themeColor} transition duration-300 text-sm`}>
                 View Task Result
               </button>

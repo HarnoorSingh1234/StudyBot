@@ -4,7 +4,7 @@ import Editor from '@monaco-editor/react';
 import axios from 'axios';
 
 function CodingPage() {
-  const { taskId } = useParams(); // Retrieve taskId from the URL
+  const { taskId, userId } = useParams(); // Retrieve taskId and userId from the URL
   const location = useLocation(); // Retrieve location to determine the course
   const [code, setCode] = useState('// Write your code here');
   const [output, setOutput] = useState('');
@@ -34,12 +34,12 @@ function CodingPage() {
       const { score, suggestions, optimalSolution } = response.data;
 
       // Navigate to ResultsPage with the user's code, suggestions, score, and optimal solution
-      navigate(`/course/${course.toLowerCase()}/task/${taskId}`, {
+      navigate(`/user/${userId}/course/${course.toLowerCase()}/result/task/${taskId}`, {
         state: { completionStatus: true, score, suggestions, optimalSolution, taskId, course },
       });
     } catch (error) {
       console.error('Submit Code Error:', error);
-      navigate(`/course/${course.toLowerCase()}/task/${taskId}`, {
+      navigate(`/user/${userId}/course/${course.toLowerCase()}/result/task/${taskId}`, {
         state: { completionStatus: false },
       });
     }

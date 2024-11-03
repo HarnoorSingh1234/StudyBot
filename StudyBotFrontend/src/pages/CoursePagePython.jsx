@@ -62,7 +62,7 @@ function CoursePagePython() {
 
             <div className="flex space-x-3">
               {/* Start Coding Button */}
-              <Link to={`/python/coding/task/${task.id}`}>
+              <Link to={`/user/:userId/course/python/task/${task.id}`}>
                 <button className="px-4 py-2 bg-black text-gray-200 border border-white rounded-md hover:border-yellow-500 transition duration-300 text-sm">
                   Start Coding
                 </button>

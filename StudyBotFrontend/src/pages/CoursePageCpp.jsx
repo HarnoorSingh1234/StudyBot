@@ -62,7 +62,7 @@ function CoursePageCpp() {
 
             <div className="flex space-x-3">
               {/* Start Coding Button */}
-              <Link to={`/cpp/coding/task/${task.id}`}>
+              <Link to={`/user/:userId/course/cpp/task/${task.id}`}>
                 <button className="px-4 py-2 bg-black text-gray-200 border border-white rounded-md hover:border-blue-500 transition duration-300 text-sm">
                   Start Coding
                 </button>
