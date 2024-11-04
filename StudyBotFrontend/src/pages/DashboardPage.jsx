@@ -9,7 +9,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { UserTaskContext } from '../contexts/UserTaskContext';
+// import { UserTaskContext } from '../contexts/UserTaskContext';
+import { UserContext } from '../contexts';
 import { TasksContext } from '../contexts/TasksContext';
 
 const progressData = [
@@ -31,12 +32,13 @@ const studySessions = {
 
 function DashboardPage() {
   const { tasks } = useContext(TasksContext); // General task data for all users
-  const { userTasks } = useContext(UserTaskContext); // User-specific task progress data
+  // const { userTasks } = useContext(UserTaskContext); // User-specific task progress data
   const { userId } = useParams();
   const [userCourses, setUserCourses] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState('10');
   const [selectedYear, setSelectedYear] = useState('2023');
-
+  const { user } = useContext(UserContext);
+  console.log("User ID from context:", user?.userId);
   useEffect(() => {
     // If tasks are not available, add mock courses for Python and C++
     if (!tasks || tasks.length === 0) {
@@ -66,7 +68,7 @@ function DashboardPage() {
       <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-500 to-teal-400 bg-clip-text text-transparent tracking-wide text-center mb-12">
         My Dashboard
       </h2>
-
+      {user ? <h1>Welcome, {user.username}</h1> : <p>Loading...</p>}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-7xl mx-auto">
         {/* Course Progress Section */}
         <div className="space-y-8">
@@ -89,11 +91,11 @@ function DashboardPage() {
                   className={`${
                     course.id === 'python' ? 'bg-yellow-500' : 'bg-blue-500'
                   } h-full transition-width duration-300`}
-                  style={{ width: `${userTasks[course.id]?.progress || 0}%` }}
+                  // style={{ width: `${userTasks[course.id]?.progress || 0}%` }}
                 ></div>
               </div>
               <p className="text-gray-400">
-                {userTasks[course.id]?.progress || 0}% completed
+                {/* {userTasks[course.id]?.progress || 0}% completed */}
               </p>
               <div className="flex space-x-4">
                 <Link to={`/user/${userId}/course/${course.id}`}>

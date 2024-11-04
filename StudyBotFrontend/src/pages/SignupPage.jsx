@@ -5,22 +5,28 @@ function SignupPage() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSignup = async (e) => {
     e.preventDefault();
 
-    // Simulate signup process (you would replace this with an actual API call)
     try {
-      // Mock API response
-      const userId = '12345'; // Assume userId is returned from the API after signup
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password }),
+      });
 
-      // Log user information (for development purposes)
-      console.log("Signing up with:", { username, email, password });
+      if (!response.ok) {
+        throw new Error('Signup failed');
+      }
 
-      // Redirect to the dashboard with userId
+      const data = await response.json();
+      const userId = data.userId ; // Replace '12345' if userId is not returned by your API
       navigate(`/user/${userId}/dashboard`);
     } catch (error) {
+      setError("Signup failed: Email may already be in use");
       console.error("Signup failed:", error);
     }
   };
@@ -31,6 +37,7 @@ function SignupPage() {
         <h2 className="text-3xl font-semibold text-center text-blue-400">Sign Up</h2>
         
         <form onSubmit={handleSignup} className="space-y-4">
+          {error && <p className="text-red-500">{error}</p>}
           <div className="space-y-1">
             <label htmlFor="username" className="block text-sm text-gray-300">Username</label>
             <input
@@ -80,10 +87,7 @@ function SignupPage() {
 
         <div className="flex items-center justify-between mt-4">
           <span className="text-sm text-gray-400">Already have an account?</span>
-          <Link
-            to="/login"
-            className="text-sm font-medium text-blue-400 hover:underline"
-          >
+          <Link to="/login" className="text-sm font-medium text-blue-400 hover:underline">
             Log in
           </Link>
         </div>

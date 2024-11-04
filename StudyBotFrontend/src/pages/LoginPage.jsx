@@ -1,24 +1,35 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { UserContext } from '../contexts/UserContext';
 
 function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { setUser } = useContext(UserContext); // Access setUser from UserContext
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    // Mock login process (you would replace this with an actual API call)
-    console.log("Logging in with:", { username, password });
-
     try {
-      // Mock successful login response with userId
-      const userId = '12345'; // Replace this with actual user ID from backend
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
 
-      // Redirect to the user's dashboard
-      navigate(`/user/${userId}/dashboard`);
+      if (!response.ok) {
+        throw new Error('Login failed');
+      }
+
+      const data = await response.json();
+      console.log("Data received from backend:", data); // Console check for backend data
+
+      setUser(data); // Update user data in context
+      navigate(`/user/${data.userId}/dashboard`); // Redirect to dashboard with userId
     } catch (error) {
+      setError("Login failed: Invalid credentials");
       console.error("Login failed:", error);
     }
   };
@@ -27,8 +38,9 @@ function LoginPage() {
     <div className="flex items-center justify-center min-h-screen bg-black text-gray-200">
       <div className="w-full max-w-md p-8 space-y-6 bg-gray-900 rounded-lg shadow-lg border border-gray-700">
         <h2 className="text-3xl font-semibold text-center text-blue-400">Login</h2>
-        
+
         <form onSubmit={handleLogin} className="space-y-4">
+          {error && <p className="text-red-500">{error}</p>}
           <div className="space-y-1">
             <label htmlFor="username" className="block text-sm text-gray-300">Username</label>
             <input
@@ -41,7 +53,7 @@ function LoginPage() {
               placeholder="Enter your username"
             />
           </div>
-          
+
           <div className="space-y-1">
             <label htmlFor="password" className="block text-sm text-gray-300">Password</label>
             <input
@@ -62,13 +74,10 @@ function LoginPage() {
             Login
           </button>
         </form>
-        
+
         <div className="flex items-center justify-between mt-4">
           <span className="text-sm text-gray-400">New user?</span>
-          <Link
-            to="/signup"
-            className="text-sm font-medium text-blue-400 hover:underline"
-          >
+          <Link to="/signup" className="text-sm font-medium text-blue-400 hover:underline">
             Create an account
           </Link>
         </div>
