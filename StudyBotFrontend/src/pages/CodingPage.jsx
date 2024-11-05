@@ -1,17 +1,38 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import axios from 'axios';
+import { supabase } from '../contexts/supabaseClient';
 
 function CodingPage() {
   const { taskId, userId } = useParams(); // Retrieve taskId and userId from the URL
   const location = useLocation(); // Retrieve location to determine the course
+  const [task, setTask] = useState(null); // State to store task details
   const [code, setCode] = useState('// Write your code here');
   const [output, setOutput] = useState('');
   const navigate = useNavigate();
 
   // Determine the course (C++ or Python) based on the URL path
   const course = location.pathname.includes('/cpp') ? 'Cpp' : 'Python';
+
+  // Fetch task details from Supabase based on taskId
+  useEffect(() => {
+    const fetchTaskDetails = async () => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('task_id', taskId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching task details:', error);
+      } else {
+        setTask(data);
+      }
+    };
+
+    fetchTaskDetails();
+  }, [taskId]);
 
   // Function to handle code execution (Run Code)
   const handleRunCode = async () => {
@@ -54,44 +75,57 @@ function CodingPage() {
         {course} Coding Task {taskId}
       </h2>
 
-      {/* Code Editor */}
-      <div className="bg-gray-900 p-4 rounded-md shadow-lg border border-gray-700 space-y-4">
-        <Editor
-          height="400px"
-          defaultLanguage={course === 'C++' ? 'cpp' : 'python'}
-          theme="vs-dark"
-          value={code}
-          onChange={(value) => setCode(value)}
-          options={{
-            fontSize: 14,
-            minimap: { enabled: false },
-          }}
-        />
-        
-        {/* Run Code and Submit Code Buttons */}
-        <div className="flex space-x-4 mt-4">
-          <button
-            className={`px-4 py-2 bg-black text-gray-200 border border-white rounded-md ${borderColor} transition duration-300 text-sm`}
-            onClick={handleRunCode}
-          >
-            Run Code
-          </button>
-          <button
-            className={`px-4 py-2 bg-black text-gray-200 border border-white rounded-md ${borderColor} transition duration-300 text-sm`}
-            onClick={handleSubmit}
-          >
-            Submit Code
-          </button>
-        </div>
-        
-        {/* Output Section */}
-        {output && (
-          <div className="mt-4 bg-gray-800 p-4 rounded-md border border-gray-700 text-sm text-gray-300">
-            <h3 className="font-semibold text-gray-300 mb-2">Output</h3>
-            <pre>{output}</pre>
+      {task ? (
+        <>
+          {/* Task Details Section */}
+          <div className="bg-gray-900 p-4 rounded-md shadow-lg border border-gray-700 space-y-4">
+            <h3 className="text-2xl text-gray-300">{task.title}</h3>
+            <p className="text-sm text-gray-400">{task.question}</p>
+            
           </div>
-        )}
-      </div>
+
+          {/* Code Editor Section */}
+          <div className="bg-gray-900 p-4 rounded-md shadow-lg border border-gray-700 space-y-4">
+            <Editor
+              height="400px"
+              defaultLanguage={course === 'C++' ? 'cpp' : 'python'}
+              theme="vs-dark"
+              value={code}
+              onChange={(value) => setCode(value)}
+              options={{
+                fontSize: 14,
+                minimap: { enabled: false },
+              }}
+            />
+
+            {/* Run Code and Submit Code Buttons */}
+            <div className="flex space-x-4 mt-4">
+              <button
+                className={`px-4 py-2 bg-black text-gray-200 border border-white rounded-md ${borderColor} transition duration-300 text-sm`}
+                onClick={handleRunCode}
+              >
+                Run Code
+              </button>
+              <button
+                className={`px-4 py-2 bg-black text-gray-200 border border-white rounded-md ${borderColor} transition duration-300 text-sm`}
+                onClick={handleSubmit}
+              >
+                Submit Code
+              </button>
+            </div>
+
+            {/* Output Section */}
+            {output && (
+              <div className="mt-4 bg-gray-800 p-4 rounded-md border border-gray-700 text-sm text-gray-300">
+                <h3 className="font-semibold text-gray-300 mb-2">Output</h3>
+                <pre>{output}</pre>
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+        <p>Loading task details...</p>
+      )}
     </div>
   );
 }

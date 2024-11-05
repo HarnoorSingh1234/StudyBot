@@ -1,24 +1,46 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { supabase } from '../contexts/supabaseClient';
 
 function CoursePageCpp() {
-  // Mock data to represent progress and task completion status
-  const courseProgress = 30; // Example progress value (e.g., 30% completed)
-  const tasks = [
-    {
-      id: 1,
-      title: 'Introduction to C++',
-      videoLink: '#', // Link to the video (e.g., a video player link)
-      taskLink: 'https://drive.google.com/example-task-pdf', // Link to the task PDF
-      completed: false, // Example completion status
-    },
-    // Add more tasks here if needed
-  ];
+  const [tasks, setTasks] = useState([]);
+  const [courseProgress, setCourseProgress] = useState(0);
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        // Fetch tasks for C++ course (task IDs 1 to 10)
+        const { data, error } = await supabase
+          .from('tasks')
+          .select('*')
+          .eq('course', 'cpp')
+          .gte('task_id', 1)
+          .lte('task_id', 10);
+
+        if (error) throw error;
+        
+        setTasks(data);
+        calculateProgress(data);
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+      }
+    };
+
+    fetchTasks();
+  }, []);
+
+  // Calculate course progress based on the completion status of tasks
+  const calculateProgress = (tasks) => {
+    const completedTasks = tasks.filter((task) => task.completed).length;
+    const progress = (completedTasks / tasks.length) * 100;
+    setCourseProgress(Math.round(progress));
+  };
 
   return (
     <div className="min-h-screen bg-black text-gray-200 p-8 space-y-8">
       <div className="flex justify-between items-center mb-8">
         <h2 className="text-4xl font-semibold text-blue-400">C++ Course</h2>
-        
+
         {/* Progress Bar */}
         <div className="flex items-center space-x-2 bg-gray-900 p-4 rounded-md shadow-md border border-gray-700">
           <h3 className="text-lg font-medium text-gray-300">Progress</h3>
@@ -34,15 +56,20 @@ function CoursePageCpp() {
 
       {/* Task Sections */}
       {tasks.map((task) => (
-        <div key={task.id} className="bg-black p-6 rounded-md shadow-md border border-white space-y-4">
+        <div 
+          key={task.task_id} 
+          className="bg-black p-6 rounded-md shadow-md border border-white transition-all duration-300 hover:shadow-lg hover:border-blue-500 space-y-4"
+        > 
           <div className="flex justify-between items-center">
-            {/* Task Title and Description */}
             <div>
-              <h3 className="text-xl font-semibold text-gray-300">Video {task.id}: {task.title}</h3>
-              <p className="text-gray-400 text-sm">Watch the video to understand the basics of C++ programming.</p>
+              <h3 className="text-xl font-semibold text-gray-300">
+                Video {task.task_id}: {task.title}
+              </h3>
+              <p className="text-gray-400 text-sm">
+                Watch the video to understand the basics of C++ programming.
+              </p>
             </div>
 
-            {/* Status Badge */}
             <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
               task.completed ? 'bg-green-500 text-white' : 'bg-gray-600 text-white'
             }`}>
@@ -54,27 +81,19 @@ function CoursePageCpp() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mt-4 space-y-3 md:space-y-0">
             {/* Watch Video Button */}
             <button
-              className="px-4 py-2 bg-black text-gray-200 border border-white rounded-md hover:border-blue-500 transition duration-300 text-sm"
-              onClick={() => window.open(task.videoLink, '_blank')}
+              className="px-4 py-2 bg-black text-gray-200 border border-white rounded-md hover:border-blue-500 transition-all duration-300 hover:shadow-lg text-sm"
+              onClick={() => window.open(task.video_link, '_blank')}
             >
               Watch Video
             </button>
 
             <div className="flex space-x-3">
               {/* Start Coding Button */}
-              <Link to={`/user/:userId/course/cpp/task/${task.id}`}>
-                <button className="px-4 py-2 bg-black text-gray-200 border border-white rounded-md hover:border-blue-500 transition duration-300 text-sm">
+              <Link to={`/user/:userId/course/cpp/task/${task.task_id}`}>
+                <button className="px-4 py-2 bg-black text-gray-200 border border-white rounded-md hover:border-blue-500 transition-all duration-300 hover:shadow-lg text-sm">
                   Start Coding
                 </button>
               </Link>
-
-              {/* View Task Button */}
-              <button
-                className="px-4 py-2 bg-black text-gray-200 border border-white rounded-md hover:border-blue-500 transition duration-300 text-sm"
-                onClick={() => window.open(task.taskLink, '_blank')}
-              >
-                View Task
-              </button>
             </div>
           </div>
         </div>

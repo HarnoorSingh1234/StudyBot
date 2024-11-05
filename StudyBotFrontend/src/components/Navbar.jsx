@@ -22,7 +22,7 @@ function Navbar() {
         <li>
           <Link
             to="/"
-            className="px-4 py-2 border border-white text-gray-200 hover:text-blue-400 hover:border-blue-500 transition duration-300 rounded-md"
+            className="px-4 py-2 text-gray-200 hover:text-blue-400 hover:border-blue-500 transition duration-300 rounded-md"
           >
             Home
           </Link>
@@ -30,7 +30,7 @@ function Navbar() {
         <li>
           <Link
             to={`/user/${userId}/dashboard`}
-            className="px-4 py-2 border border-white text-gray-200 hover:text-blue-400 hover:border-blue-500 transition duration-300 rounded-md"
+            className="px-4 py-2  text-gray-200 hover:text-blue-400 hover:border-blue-500 transition duration-300 rounded-md"
           >
             Dashboard
           </Link>
@@ -38,7 +38,7 @@ function Navbar() {
         <li>
           <Link
             to={`/user/${userId}/course/${defaultCourse}/results`}
-            className="px-4 py-2 border border-white text-gray-200 hover:text-blue-400 hover:border-blue-500 transition duration-300 rounded-md"
+            className="px-4 py-2  text-gray-200 hover:text-blue-400 hover:border-blue-500 transition duration-300 rounded-md"
           >
             Results
           </Link>
@@ -46,7 +46,7 @@ function Navbar() {
         <li>
           <Link
             to="/leaderboard"
-            className="px-4 py-2 border border-white text-gray-200 hover:text-blue-400 hover:border-blue-500 transition duration-300 rounded-md"
+            className="px-4 py-2  text-gray-200 hover:text-blue-400 hover:border-blue-500 transition duration-300 rounded-md"
           >
             Leaderboard
           </Link>
