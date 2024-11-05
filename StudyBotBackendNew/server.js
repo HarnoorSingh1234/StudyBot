@@ -4,7 +4,7 @@ import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
 
 const app = express();
-connectDB(); // Initialize MongoDB connection
+// connectDB(); // Initialize MongoDB connection
 
 // Middleware
 app.use(cors()); // Enable CORS

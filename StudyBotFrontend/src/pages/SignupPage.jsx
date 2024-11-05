@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '../contexts/supabaseClient';
 
 function SignupPage() {
   const [username, setUsername] = useState('');
@@ -12,21 +13,30 @@ function SignupPage() {
     e.preventDefault();
 
     try {
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password }),
+      // Step 1: Sign up the user
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { username }
+        }
       });
 
-      if (!response.ok) {
-        throw new Error('Signup failed');
-      }
+      if (error) {
+        setError("Signup failed: " + error.message);
+      } else {
+        // Step 2: Insert additional user data into `userdetails` table
+        const { user } = data;
+        await supabase
+          .from('userdetails')
+          .insert([
+            { id: user.id, email: user.email, username: username, progress: 0 }
+          ]);
 
-      const data = await response.json();
-      const userId = data.userId ; // Replace '12345' if userId is not returned by your API
-      navigate(`/user/${userId}/dashboard`);
+        navigate(`/user/${user.id}/dashboard`);
+      }
     } catch (error) {
-      setError("Signup failed: Email may already be in use");
+      setError("Signup failed: " + error.message);
       console.error("Signup failed:", error);
     }
   };
@@ -35,7 +45,7 @@ function SignupPage() {
     <div className="flex items-center justify-center min-h-screen bg-black text-gray-200">
       <div className="w-full max-w-md p-8 space-y-6 bg-gray-900 rounded-lg shadow-lg border border-gray-700">
         <h2 className="text-3xl font-semibold text-center text-blue-400">Sign Up</h2>
-        
+
         <form onSubmit={handleSignup} className="space-y-4">
           {error && <p className="text-red-500">{error}</p>}
           <div className="space-y-1">
@@ -50,7 +60,7 @@ function SignupPage() {
               placeholder="Enter your username"
             />
           </div>
-          
+
           <div className="space-y-1">
             <label htmlFor="email" className="block text-sm text-gray-300">Email</label>
             <input
