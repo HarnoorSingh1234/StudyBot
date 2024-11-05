@@ -47,7 +47,7 @@ const DashboardPage = () => {
     };
 
     fetchUserData().then(fetchUserProgress);
-  }, [user]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-black text-gray-200 p-8">

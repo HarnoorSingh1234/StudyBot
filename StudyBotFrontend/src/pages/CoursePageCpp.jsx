@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../contexts/supabaseClient';
@@ -5,11 +6,22 @@ import { supabase } from '../contexts/supabaseClient';
 function CoursePageCpp() {
   const [tasks, setTasks] = useState([]);
   const [courseProgress, setCourseProgress] = useState(0);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const fetchTasks = async () => {
+    // Fetch user data and then tasks
+    const fetchUserData = async () => {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) {
+        console.error("Error fetching user data:", userError);
+      } else {
+        setUser(userData.user);
+        fetchTasks(userData.user.id); // Pass user ID to fetch tasks after user data is set
+      }
+    };
+
+    const fetchTasks = async (userId) => {
       try {
-        // Fetch tasks for C++ course (task IDs 1 to 10)
         const { data, error } = await supabase
           .from('tasks')
           .select('*')
@@ -18,7 +30,7 @@ function CoursePageCpp() {
           .lte('task_id', 10);
 
         if (error) throw error;
-        
+
         setTasks(data);
         calculateProgress(data);
       } catch (error) {
@@ -26,10 +38,9 @@ function CoursePageCpp() {
       }
     };
 
-    fetchTasks();
+    fetchUserData();
   }, []);
 
-  // Calculate course progress based on the completion status of tasks
   const calculateProgress = (tasks) => {
     const completedTasks = tasks.filter((task) => task.completed).length;
     const progress = (completedTasks / tasks.length) * 100;
@@ -63,7 +74,7 @@ function CoursePageCpp() {
           <div className="flex justify-between items-center">
             <div>
               <h3 className="text-xl font-semibold text-gray-300">
-                Video {task.task_id}: {task.title}
+                Task {task.task_id}: {task.title}
               </h3>
               <p className="text-gray-400 text-sm">
                 Watch the video to understand the basics of C++ programming.
@@ -81,7 +92,7 @@ function CoursePageCpp() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mt-4 space-y-3 md:space-y-0">
             {/* Watch Video Button */}
             <button
-              className="px-4 py-2 bg-black text-gray-200 border border-white rounded-md hover:border-blue-500 transition-all duration-300 hover:shadow-lg text-sm"
+              className="px-4 py-2 bg-black text-gray-200 border border-white rounded-md hover:border-blue-500 hover:text-blue-400 transition-all duration-300 hover:shadow-lg text-sm"
               onClick={() => window.open(task.video_link, '_blank')}
             >
               Watch Video
@@ -89,11 +100,13 @@ function CoursePageCpp() {
 
             <div className="flex space-x-3">
               {/* Start Coding Button */}
-              <Link to={`/user/:userId/course/cpp/task/${task.task_id}`}>
-                <button className="px-4 py-2 bg-black text-gray-200 border border-white rounded-md hover:border-blue-500 transition-all duration-300 hover:shadow-lg text-sm">
-                  Start Coding
-                </button>
-              </Link>
+              {user && (
+                <Link to={`/user/${user.id}/course/cpp/task/${task.task_id}`}>
+                  <button className="px-4 py-2 bg-black text-gray-200 border border-white rounded-md hover:border-blue-500 hover:text-blue-400 transition-all duration-300 hover:shadow-lg text-sm">
+                    Start Coding
+                  </button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
