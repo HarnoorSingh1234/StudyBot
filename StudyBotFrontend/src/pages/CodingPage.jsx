@@ -4,6 +4,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import axios from 'axios';
 import { supabase } from '../contexts/supabaseClient';
+import Loader from '../components/Loader';
 
 function CodingPage() {
   const { taskId, userId } = useParams();
@@ -13,6 +14,28 @@ function CodingPage() {
   const [output, setOutput] = useState('');
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [selectedLanguage, setSelectedLanguage] = useState(location.pathname.includes('/cpp') ? 'cpp' : 'python');
+  const [isLoading, setIsLoading] = useState(false);
+  const [runStatus, setRunStatus] = useState('loading');
+
+  const languageConfigs = {
+    cpp: {
+      id: 54,
+      name: 'C++',
+      monacoId: 'cpp',
+      color: 'text-blue-400',
+      borderColor: 'hover:border-blue-500'
+    },
+    python: {
+      id: 71,
+      name: 'Python',
+      monacoId: 'python',
+      color: 'text-yellow-400',
+      borderColor: 'hover:border-yellow-500'
+    }
+  };
+
+  // Determine the course (C++ or Python) based on the URL path
   const course = location.pathname.includes('/cpp') ? 'Cpp' : 'Python';
 
   useEffect(() => {
@@ -42,12 +65,60 @@ function CodingPage() {
   }, [taskId]);
 
   const handleRunCode = async () => {
+    const JUDGE0_API_URL = 'https://judge0-ce.p.rapidapi.com/submissions';
+    const JUDGE0_API_KEY = '0a0304cc73msh41680cc8e563c49p1a9153jsn1e6f8aeac1f9';
+
     try {
-      const response = await axios.post('/api/run-code', { code });
-      setOutput(response.data.output);
+      // Convert source code to Base64
+      const encodedCode = btoa(code);
+      
+      // Step 1: Create a submission
+      const createSubmissionResponse = await axios({
+        method: 'post',
+        url: `${JUDGE0_API_URL}?base64_encoded=true&fields=*`,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-RapidAPI-Key': JUDGE0_API_KEY,
+          'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com'
+        },
+        data: {
+          language_id: languageConfigs[selectedLanguage].id,
+          source_code: encodedCode,
+          stdin: btoa('') // Add base64 encoded input if needed
+        }
+      });
+
+      const { token } = createSubmissionResponse.data;
+
+      // Step 2: Poll for results
+      const getResult = async () => {
+        const resultResponse = await axios({
+          method: 'get',
+          url: `${JUDGE0_API_URL}/${token}?base64_encoded=true&fields=*`,
+          headers: {
+            'X-RapidAPI-Key': JUDGE0_API_KEY,
+            'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com'
+          }
+        });
+
+        const { status, stdout, stderr } = resultResponse.data;
+
+        if (status.id <= 2) {
+          // Status 1: In Queue, Status 2: Processing
+          setTimeout(getResult, 1000); // Poll every second
+        } else if (status.id === 3) {
+          // Status 3: Accepted - decode the base64 output
+          setOutput(atob(stdout || '')); // Decode base64 output
+        } else {
+          // Any other status indicates an error
+          setOutput(atob(stderr || '') || 'Error running code. Please try again.');
+        }
+      };
+
+      getResult();
     } catch (error) {
+      console.error('Run Code Error:', error.response?.data || error);
       setOutput('Error running code. Please try again.');
-      console.error('Run Code Error:', error);
     }
   };
 
@@ -91,13 +162,11 @@ function CodingPage() {
     }
   };
 
-  const primaryColor = course === 'Python' ? 'text-yellow-400' : 'text-blue-400';
-  const borderColor = course === 'Python' ? 'hover:border-yellow-500' : 'hover:border-blue-500';
-
   return (
     <div className="min-h-screen bg-black text-gray-200 p-8 space-y-6">
-      <h2 className={`text-4xl font-bold ${primaryColor} mb-4`}>
-        {course} Coding Task {taskId > 15 ? taskId - 20 : taskId}
+
+      <h2 className={`text-4xl font-semibold ${languageConfigs[selectedLanguage].color} mb-4`}>
+        {course} Coding Task {taskId}
       </h2>
 
       {task ? (
@@ -109,10 +178,29 @@ function CodingPage() {
           </div>
 
           {/* Code Editor Section */}
-          <div className="bg-black p-6 rounded-lg shadow-lg border border-gray-700 space-y-4">
+
+
+          <div className="bg-gray-900 p-4 rounded-md shadow-lg border border-gray-700 space-y-4">
+            {/* Language Selector */}
+            <div className="flex items-center space-x-4 mb-4">
+              <label className="text-gray-300">Select Language:</label>
+              <select
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+                className="bg-gray-800 text-gray-200 px-3 py-1 rounded-md border border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600"
+              >
+                {Object.entries(languageConfigs).map(([key, config]) => (
+                  <option key={key} value={key}>
+                    {config.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <Editor
               height="400px"
-              defaultLanguage={course === 'Cpp' ? 'cpp' : 'python'}
+              defaultLanguage={languageConfigs[selectedLanguage].monacoId}
+
               theme="vs-dark"
               value={code}
               onChange={(value) => setCode(value)}
@@ -128,13 +216,16 @@ function CodingPage() {
             {/* Run Code and Submit Code Buttons */}
             <div className="flex space-x-4 mt-4">
               <button
-                className={`px-6 py-2 bg-black text-gray-200 border border-white rounded-lg ${borderColor} transition duration-300 hover:shadow-lg text-md`}
+
+                className={`px-4 py-2 bg-black text-gray-200 border border-white rounded-md ${languageConfigs[selectedLanguage].borderColor} transition duration-300 text-sm`}
                 onClick={handleRunCode}
               >
                 Run Code
               </button>
               <button
-                className={`px-6 py-2 bg-black text-gray-200 border border-white rounded-lg ${borderColor} transition duration-300 hover:shadow-lg text-md`}
+
+                className={`px-4 py-2 bg-black text-gray-200 border border-white rounded-md ${languageConfigs[selectedLanguage].borderColor} transition duration-300 text-sm`}
+
                 onClick={handleSubmit}
               >
                 Submit Code
@@ -143,9 +234,19 @@ function CodingPage() {
 
             {/* Output Section */}
             {output && (
-              <div className="mt-4 bg-gray-800 p-4 rounded-lg border border-gray-700 text-sm text-gray-300">
-                <h3 className="font-semibold text-gray-200 mb-2">Output</h3>
-                <pre className="whitespace-pre-wrap leading-relaxed">{output}</pre>
+
+              <div className="mt-4 bg-gray-800 p-4 rounded-md border border-gray-700 text-sm text-gray-300">
+                <h3 className="font-semibold text-gray-300 mb-2">Output</h3>
+                
+                {isLoading ? (
+                  <Loader 
+                    status={runStatus} 
+                    size="medium"
+                  />
+                ) : (
+                  <pre>{output}</pre>
+                )}
+
               </div>
             )}
           </div>

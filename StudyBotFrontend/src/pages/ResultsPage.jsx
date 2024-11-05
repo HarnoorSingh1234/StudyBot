@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import GaugeChart from 'react-gauge-chart';
 import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../contexts/supabaseClient';
+import { analyzeCode } from '../utils/gemini';
+
 
 function ResultsPage() {
   const { course, taskId, userId } = useParams();
@@ -18,56 +20,106 @@ function ResultsPage() {
   const [explanation, setExplanation] = useState('');
   const [message, setMessage] = useState('Please try again.');
   const [showExplanation, setShowExplanation] = useState(false);
+  const [code, setCode] = useState('');
+  const [problemStatement, setProblemStatement] = useState('');
+  const [analysisData, setAnalysisData] = useState({
+    completionStatus: true,
+    score: 85,
+    suggestions: [],
+    optimalSolution: `int main() {\n  // Optimal solution code\n  return 0;\n}`
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const themeColor = course === 'python' ? 'text-yellow-400' : 'text-blue-400';
   const borderColor = course === 'python' ? 'border-yellow-500' : 'border-blue-500';
   const hoverColor = course === 'python' ? 'hover:text-yellow-400' : 'hover:text-blue-400';
   const gaugeColor = course === 'python' ? '#fcd34d' : '#3B82F6';
   
-  useEffect(() => {
-    const fetchResults = async () => {
-      try {
-        // Fetch the submission data
-        
-        const { data: submissionData, error: submissionError } = await supabase
-          .from('submissions')
-          .select('output, is_correct, gemini_suggestions, task_score')
-          .eq('user_id', userId)
-          .eq('task_id', taskId)
-          .single();
-  
-        if (submissionError) throw submissionError;
-  
-        // Fetch the task details
-        const { data: taskData, error: taskError } = await supabase
-          .from('tasks')
-          .select('optimal_solution, explanation')
-          .eq('task_id', taskId)
-          .single();
-  
-        if (taskError) throw taskError;
-  
-        // Set the fetched data
-        setCompletionStatus(submissionData.is_correct);
-        setSuggestions(submissionData.gemini_suggestions ? JSON.parse(submissionData.gemini_suggestions) : []);
-        setOptimalSolution(taskData.optimal_solution);
-        setExplanation(taskData.explanation);
-        setScore(submissionData.task_score || 0); // Set score from `task_score` field or default to 0
-  
-        if (submissionData.is_correct) {
-          setMessage("Task completed successfully!");
-        } else {
-          setMessage("Please try again.");
-        }
-      } catch (error) {
-        console.error("Error fetching results:", error);
-        setMessage("Error loading results. Please try again.");
-      }
-    };
-  
-    fetchResults();
-  }, [userId, taskId]);
-  
+ useEffect(() => {
+  const fetchResults = async () => {
+    try {
+      const { data: submissionData, error: submissionError } = await supabase
+        .from('submissions')
+        .select('output, is_correct, gemini_suggestions, task_score')
+        .eq('user_id', userId)
+        .eq('task_id', taskId)
+        .single();
+
+      if (submissionError) throw submissionError;
+
+      const { data: taskData, error: taskError } = await supabase
+        .from('tasks')
+        .select('optimal_solution, explanation')
+        .eq('task_id', taskId)
+        .single();
+
+      if (taskError) throw taskError;
+
+      setCompletionStatus(submissionData.is_correct);
+      setSuggestions(submissionData.gemini_suggestions ? JSON.parse(submissionData.gemini_suggestions) : []);
+      setOptimalSolution(taskData.optimal_solution);
+      setExplanation(taskData.explanation);
+      setScore(submissionData.task_score || 0);
+
+      setMessage(submissionData.is_correct ? "Task completed successfully!" : "Please try again.");
+    } catch (error) {
+      console.error("Error fetching results:", error);
+      setMessage("Error loading results. Please try again.");
+    }
+  };
+
+  fetchResults();
+}, [userId, taskId]);
+
+useEffect(() => {
+  const analyzeSubmission = async () => {
+    try {
+      setIsLoading(true);
+
+      // First save to database
+      await fetch('/api/submissions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          task_id: taskId,
+          code: code,
+          created_at: new Date().toISOString(),
+        }),
+      });
+
+      // Then analyze with Gemini
+      const analysis = await analyzeCode(code, problemStatement, course);
+
+      setAnalysisData({
+        completionStatus: analysis.isCorrect,
+        score: analysis.score,
+        suggestions: analysis.suggestions,
+        optimalSolution: analysis.optimalSolution,
+      });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (code && problemStatement) {
+    analyzeSubmission();
+  }
+}, [code, problemStatement, userId, taskId, course]);
+
+useEffect(() => {
+  if (score >= 90) setMessage("Excellent work!");
+  else if (score >= 80) setMessage("Great job!");
+  else if (score >= 70) setMessage("Well done!");
+  else if (score >= 50) setMessage("Good effort!");
+  else setMessage("Keep practicing!");
+}, [score]);
+
   return (
     <div className="min-h-screen bg-black text-gray-200 p-8 space-y-6">
       <h2 className={`text-4xl font-semibold ${themeColor} mb-4`}>
