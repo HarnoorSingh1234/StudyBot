@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import GaugeChart from 'react-gauge-chart';
 import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
+import { analyzeCode } from '../utils/gemini';
 
 function ResultsPage() {
   const { course, taskId, userId } = useParams();
@@ -27,6 +28,16 @@ function ResultsPage() {
 
   const [message, setMessage] = useState('');
   const [showExplanation, setShowExplanation] = useState(false);
+  const [code, setCode] = useState('');
+  const [problemStatement, setProblemStatement] = useState('');
+  const [analysisData, setAnalysisData] = useState({
+    completionStatus: true,
+    score: 85,
+    suggestions: [],
+    optimalSolution: `int main() {\n  // Optimal solution code\n  return 0;\n}`
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const explanation = [
     "int main() { - Start of the main function.",
@@ -46,6 +57,46 @@ function ResultsPage() {
     else if (score >= 50) setMessage("Good effort!");
     else setMessage("Keep practicing!");
   }, [score]);
+
+  useEffect(() => {
+    const analyzeSubmission = async () => {
+      try {
+        setIsLoading(true);
+        
+        // First save to database
+        await fetch('/api/submissions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            user_id: userId,
+            task_id: taskId,
+            code: code,
+            created_at: new Date().toISOString(),
+          }),
+        });
+
+        // Then analyze with Gemini
+        const analysis = await analyzeCode(code, problemStatement, course);
+        
+        setAnalysisData({
+          completionStatus: analysis.isCorrect,
+          score: analysis.score,
+          suggestions: analysis.suggestions,
+          optimalSolution: analysis.optimalSolution,
+        });
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (code && problemStatement) {
+      analyzeSubmission();
+    }
+  }, [code, problemStatement, userId, taskId, course]);
 
   return (
     <div className="min-h-screen bg-black text-gray-200 p-8 space-y-6">
