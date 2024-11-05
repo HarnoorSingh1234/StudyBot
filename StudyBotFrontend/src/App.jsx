@@ -6,36 +6,42 @@ import CodingPage from './pages/CodingPage';
 import DashboardPage from './pages/DashboardPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
-import ResultsPage from './pages/ResultsPage'; // Import the ResultsPage
+import ResultsPage from './pages/ResultsPage';
 import Navbar from './components/Navbar';
 import OverallResultPage from './pages/OverallResultPage';
-import './App.css';
+
 
 function App() {
   return (
     <Router>
-      <Navbar /> 
+      <Navbar />
       <div className="container">
         <Routes>
-          {/* Home and Course Pages */}
+          {/* Home Page */}
           <Route path="/" element={<HomePage />} />
-          <Route path="/course/cpp" element={<CoursePageCpp />} />
-          <Route path="/course/python" element={<CoursePagePython />} />
-
-          {/* Coding Task Pages with dynamic task IDs for C++ and Python */}
-          <Route path="/cpp/coding/task/:taskId" element={<CodingPage />} />
-          <Route path="/python/coding/task/:taskId" element={<CodingPage />} />
 
           {/* Dashboard, Login, and Signup Pages */}
-          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/user/:userId/dashboard" element={<DashboardPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
 
-          <Route path="/:course/results" element={<OverallResultPage />} />
-  
+          {/* Courses Section */}
+          <Route path="/user/:userId/courses" element={<DashboardPage />} />
+     
 
-          {/* Results Page with dynamic course and task IDs */}
-          <Route path="/course/:course/task/:taskId" element={<ResultsPage />} />
+          {/* Specific Course Pages (C++ and Python) */}
+          <Route path="/user/:userId/course/cpp" element={<CoursePageCpp />} />
+          <Route path="/user/:userId/course/python" element={<CoursePagePython />} />
+
+          {/* Coding Task Pages for each Course with dynamic task IDs */}
+          <Route path="/user/:userId/course/cpp/task/:taskId" element={<CodingPage />} />
+          <Route path="/user/:userId/course/python/task/:taskId" element={<CodingPage />} />
+
+          {/* Overall Results for a Course */}
+          <Route path="/user/:userId/course/:course/results" element={<OverallResultPage />} />
+
+          {/* Individual Task Results */}
+          <Route path="/user/:userId/course/:course/result/task/:taskId" element={<ResultsPage />} />
         </Routes>
       </div>
     </Router>
