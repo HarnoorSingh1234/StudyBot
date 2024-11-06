@@ -1,7 +1,9 @@
+/* eslint-disable no-undef */
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Initialize the Gemini API with your API key
-const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(import.meta.env.REACT_APP_GEMINI_API_KEY);
+
 
 // Helper function to analyze code
 export async function analyzeCode(code, problemStatement, language) {

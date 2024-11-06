@@ -41,7 +41,7 @@ function ResultsPage() {
     try {
       const { data: submissionData, error: submissionError } = await supabase
         .from('submissions')
-        .select('output, is_correct, gemini_suggestions, task_score')
+        .select('output, is_correct, gemini_suggesstions, task_score')
         .eq('user_id', userId)
         .eq('task_id', taskId)
         .single();

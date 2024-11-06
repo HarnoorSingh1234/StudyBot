@@ -142,26 +142,58 @@ function CodingPage() {
     }
   };
 
+  // const handleSubmit = async () => {
+
+  //   try {
+  //     await axios.post('/api/submit-code', { code, taskId, course });
+  //     const response = await axios.post('/api/analyze-code', { code });
+  //     const { score, suggestions, optimalSolution } = response.data;
+
+  //     // Save submission data to the database
+  //     await saveSubmission(output);
+
+  //     navigate(`/user/${userId}/course/${course.toLowerCase()}/result/task/${taskId}`, {
+  //       state: { completionStatus: true, score, suggestions, optimalSolution, taskId, course },
+  //     });
+  //   } catch (error) {
+  //     console.error('Submit Code Error:', error);
+  //     navigate(`/user/${userId}/course/${course.toLowerCase()}/result/task/${taskId}`, {
+  //       state: { completionStatus: false },
+  //     });
+  //   }
+  // };
+// new code which sends data 
   const handleSubmit = async () => {
     try {
-      await axios.post('/api/submit-code', { code, taskId, course });
-      const response = await axios.post('/api/analyze-code', { code });
-      const { score, suggestions, optimalSolution } = response.data;
-
-      // Save submission data to the database
-      await saveSubmission(output);
-
+      // Insert code submission data to Supabase
+      const { error } = await supabase
+        .from('submissions')
+        .insert({
+          user_id: userId,        // The user's ID from params
+          task_id: taskId,        // The task ID from params
+          code: code              // The code written by the user in the editor
+        });
+  
+      if (error) {
+        console.error('Error saving submission to Supabase:', error);
+        setOutput('Error saving your submission. Please try again.');
+        return;
+      }
+  
+      // Optionally, you can add code here to handle further processing after submission, such as:
+      // - Displaying a success message
+      // - Redirecting to a results page
+      // - Analyzing the code using an external API like Gemini
+  
+      // For example, redirect to results page after saving the submission
       navigate(`/user/${userId}/course/${course.toLowerCase()}/result/task/${taskId}`, {
-        state: { completionStatus: true, score, suggestions, optimalSolution, taskId, course },
+        state: { completionStatus: true, taskId, course },
       });
     } catch (error) {
-      console.error('Submit Code Error:', error);
-      navigate(`/user/${userId}/course/${course.toLowerCase()}/result/task/${taskId}`, {
-        state: { completionStatus: false },
-      });
+      console.error('Error submitting code:', error);
+      setOutput('Error submitting code. Please try again.');
     }
   };
-
   return (
     <div className="min-h-screen bg-black text-gray-200 p-8 space-y-6">
 
