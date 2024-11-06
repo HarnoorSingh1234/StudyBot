@@ -14,35 +14,45 @@ function OverallResultPage() {
   const gaugeColor = course === 'python' ? '#fcd34d' : '#3B82F6';
 
   useEffect(() => {
-    const fetchSubmittedTasks = async () => {
+    const fetchLatestSubmittedTasks = async () => {
       try {
         const { data, error } = await supabase
           .from('submissions')
-          .select('task_id, code, task_score, is_correct, gemini_suggestions')
+          .select('task_id, task_score, gemini_suggestions, created_at')
           .eq('user_id', userId);
 
         if (error) throw error;
 
-        // Parse and format the tasks
-        const formattedTasks = data.map((submission) => ({
+        // Group submissions by task_id and keep only the latest submission for each task
+        const latestSubmissions = data.reduce((acc, submission) => {
+          if (
+            !acc[submission.task_id] ||
+            new Date(submission.created_at) > new Date(acc[submission.task_id].created_at)
+          ) {
+            acc[submission.task_id] = submission;
+          }
+          return acc;
+        }, {});
+
+        // Format the tasks based on the filtered latest submissions
+        const formattedTasks = Object.values(latestSubmissions).map((submission) => ({
           id: submission.task_id,
-          title: `Task ${submission.task_id}`, // You may want to fetch actual titles from a 'tasks' table if available
+          title: `Task ${submission.task_id}`, // Modify as needed if actual titles are available
           score: submission.task_score || 0,
-          completionStatus: submission.is_correct,
+          completionStatus: submission.task_score >= 75, // Mark as completed if score is 75 or higher
           suggestions: submission.gemini_suggestions ? JSON.parse(submission.gemini_suggestions) : [],
         }));
 
         setTasks(formattedTasks);
 
-        // Calculate average score
-        const completedTasks = formattedTasks.filter((task) => task.completionStatus);
-        const avgScore = completedTasks.length
-          ? completedTasks.reduce((sum, task) => sum + task.score, 0) / completedTasks.length
+        // Calculate the average score for all tasks
+        const avgScore = formattedTasks.length
+          ? formattedTasks.reduce((sum, task) => sum + task.score, 0) / formattedTasks.length
           : 0;
         setAverageScore(avgScore);
 
-        // Get suggestions from completed tasks
-        const allSuggestions = completedTasks.flatMap((task) => task.suggestions);
+        // Collect all suggestions from the tasks
+        const allSuggestions = formattedTasks.flatMap((task) => task.suggestions);
         setOverallSuggestions(allSuggestions);
 
       } catch (error) {
@@ -50,7 +60,7 @@ function OverallResultPage() {
       }
     };
 
-    fetchSubmittedTasks();
+    fetchLatestSubmittedTasks();
   }, [userId]);
 
   return (

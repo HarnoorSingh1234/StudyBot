@@ -32,12 +32,19 @@ const DashboardPage = () => {
       try {
         if (user) {
           const { data: progressData, error: progressError } = await supabase
-            .from('user_progress')
-            .select('*')
-            .eq('user_id', user.id);
+            .from('submissions')
+            .select('task_id, task_score')
+            .eq('user_id', user.id); // Fetch all submissions for this user
 
           if (progressError) throw progressError;
-          setUserProgress(progressData);
+
+          // Map data to format expected by the chart
+          const tasks = progressData.map(task => ({
+            task: `Task ${task.task_id}`, // X-axis will display Task 1, Task 2, etc.
+            score: task.task_score
+          }));
+
+          setUserProgress(tasks);
         }
       } catch (error) {
         console.error('Error fetching user progress data:', error);
@@ -95,14 +102,14 @@ const DashboardPage = () => {
 
             {/* Right Side - Progress Chart */}
             <div className="bg-black/80 backdrop-blur-sm p-8 rounded-xl border border-gray-800 hover:border-white/50 transform hover:-translate-y-2 transition-all duration-300">
-              <h3 className="text-2xl font-semibold text-blue-400 mb-4">Progress Over Time</h3>
+              <h3 className="text-2xl font-semibold text-blue-400 mb-4">Task Scores</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={userProgress} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="gray" />
-                  <XAxis dataKey="date" stroke="gray" />
-                  <YAxis stroke="gray" />
+                  <XAxis dataKey="task" stroke="gray" label={{ value: "Tasks", position: "insideBottom", offset: -5 }} />
+                  <YAxis stroke="gray" label={{ value: "Score", angle: -90, position: "insideLeft", offset: 10 }} />
                   <Tooltip />
-                  <Line type="monotone" dataKey="progress_percentage" stroke="#3b82f6" strokeWidth={2} name="Progress" />
+                  <Line type="monotone" dataKey="score" stroke="#3b82f6" strokeWidth={2} name="Score" />
                 </LineChart>
               </ResponsiveContainer>
             </div>

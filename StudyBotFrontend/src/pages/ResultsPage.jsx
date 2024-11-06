@@ -8,7 +8,7 @@ import { supabase } from '../contexts/supabaseClient';
 import { analyzeCode } from '../utils/gemini';
 
 function ResultsPage() {
-  const { taskId, userId } = useParams();
+  const { taskId, userId, course } = useParams(); // Include `course` in the params
   const navigate = useNavigate();
   const [completionStatus, setCompletionStatus] = useState(false);
   const [score, setScore] = useState(0);
@@ -178,7 +178,7 @@ function ResultsPage() {
         <button onClick={() => navigate(`/user/${userId}/dashboard`)} className="px-4 py-2 bg-black text-gray-200 border border-white rounded-md hover:border-blue-500 transition duration-300 text-sm">
           Back to Dashboard
         </button>
-        <Link to={`/user/${userId}/course/results`} className="px-4 py-2 bg-black text-gray-200 border border-blue-500 rounded-md transition duration-300 text-sm hover:text-blue-400">
+        <Link to={`/user/${userId}/course/${course}/results`} className="px-4 py-2 bg-black text-gray-200 border border-blue-500 rounded-md transition duration-300 text-sm hover:text-blue-400">
           Go to Overall Results
         </Link>
       </div>

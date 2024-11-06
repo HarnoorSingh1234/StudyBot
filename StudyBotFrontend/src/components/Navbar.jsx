@@ -63,14 +63,7 @@ function Navbar() {
             Results
           </button>
         </li>
-        <li>
-          <Link
-            to="/leaderboard"
-            className="px-4 py-2 text-gray-200 hover:text-blue-400 hover:border-b-2 border-blue-500 transition duration-300"
-          >
-            Leaderboard
-          </Link>
-        </li>
+        
       </ul>
 
       {/* Conditional rendering for Login/Signup or User Icon */}
