@@ -66,7 +66,7 @@ function CodingPage() {
 
   const handleRunCode = async () => {
     const JUDGE0_API_URL = 'https://judge0-ce.p.rapidapi.com/submissions';
-    const JUDGE0_API_KEY = '0a0304cc73msh41680cc8e563c49p1a9153jsn1e6f8aeac1f9';
+    const JUDGE0_API_KEY = 'c24a75644fmsh92973e4f8e44ddfp1c4484jsne2a394d81634';
 
     try {
       // Convert source code to Base64
@@ -142,26 +142,6 @@ function CodingPage() {
     }
   };
 
-  // const handleSubmit = async () => {
-
-  //   try {
-  //     await axios.post('/api/submit-code', { code, taskId, course });
-  //     const response = await axios.post('/api/analyze-code', { code });
-  //     const { score, suggestions, optimalSolution } = response.data;
-
-  //     // Save submission data to the database
-  //     await saveSubmission(output);
-
-  //     navigate(`/user/${userId}/course/${course.toLowerCase()}/result/task/${taskId}`, {
-  //       state: { completionStatus: true, score, suggestions, optimalSolution, taskId, course },
-  //     });
-  //   } catch (error) {
-  //     console.error('Submit Code Error:', error);
-  //     navigate(`/user/${userId}/course/${course.toLowerCase()}/result/task/${taskId}`, {
-  //       state: { completionStatus: false },
-  //     });
-  //   }
-  // };
 // new code which sends data 
   const handleSubmit = async () => {
     try {
@@ -179,11 +159,6 @@ function CodingPage() {
         setOutput('Error saving your submission. Please try again.');
         return;
       }
-  
-      // Optionally, you can add code here to handle further processing after submission, such as:
-      // - Displaying a success message
-      // - Redirecting to a results page
-      // - Analyzing the code using an external API like Gemini
   
       // For example, redirect to results page after saving the submission
       navigate(`/user/${userId}/course/${course.toLowerCase()}/result/task/${taskId}`, {
