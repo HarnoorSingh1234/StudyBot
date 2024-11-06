@@ -1,33 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import GaugeChart from 'react-gauge-chart';
-
-const courseResultsData = {
-  cpp: {
-    tasks: [
-      { id: 1, title: "Task 1: Basics of C++", score: 85, completionStatus: true },
-      { id: 2, title: "Task 2: OOP in C++", score: 92, completionStatus: true },
-      { id: 3, title: "Task 3: Advanced C++", score: 78, completionStatus: false }
-    ],
-    overallSuggestions: [
-      "Focus on optimizing algorithms in loops.",
-      "Use meaningful variable names across tasks.",
-      "Try using modern C++ practices."
-    ]
-  },
-  python: {
-    tasks: [
-      { id: 1, title: "Task 1: Python Basics", score: 88, completionStatus: true },
-      { id: 2, title: "Task 2: Data Structures", score: 80, completionStatus: true },
-      { id: 3, title: "Task 3: Advanced Python", score: 90, completionStatus: true }
-    ],
-    overallSuggestions: [
-      "Focus on using built-in functions where applicable.",
-      "Optimize the readability of the code.",
-      "Experiment with advanced libraries for efficient solutions."
-    ]
-  }
-};
+import { supabase } from '../contexts/supabaseClient';
 
 function OverallResultPage() {
   const { course, userId } = useParams();
@@ -40,16 +14,44 @@ function OverallResultPage() {
   const gaugeColor = course === 'python' ? '#fcd34d' : '#3B82F6';
 
   useEffect(() => {
-    const courseData = courseResultsData[course] || { tasks: [], overallSuggestions: [] };
-    setTasks(courseData.tasks);
-    setOverallSuggestions(courseData.overallSuggestions);
+    const fetchSubmittedTasks = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('submissions')
+          .select('task_id, code, task_score, is_correct, gemini_suggestions')
+          .eq('user_id', userId);
 
-    const completedTasks = courseData.tasks.filter(task => task.completionStatus);
-    const avgScore = completedTasks.length
-      ? completedTasks.reduce((sum, task) => sum + task.score, 0) / completedTasks.length
-      : 0;
-    setAverageScore(avgScore);
-  }, [course]);
+        if (error) throw error;
+
+        // Parse and format the tasks
+        const formattedTasks = data.map((submission) => ({
+          id: submission.task_id,
+          title: `Task ${submission.task_id}`, // You may want to fetch actual titles from a 'tasks' table if available
+          score: submission.task_score || 0,
+          completionStatus: submission.is_correct,
+          suggestions: submission.gemini_suggestions ? JSON.parse(submission.gemini_suggestions) : [],
+        }));
+
+        setTasks(formattedTasks);
+
+        // Calculate average score
+        const completedTasks = formattedTasks.filter((task) => task.completionStatus);
+        const avgScore = completedTasks.length
+          ? completedTasks.reduce((sum, task) => sum + task.score, 0) / completedTasks.length
+          : 0;
+        setAverageScore(avgScore);
+
+        // Get suggestions from completed tasks
+        const allSuggestions = completedTasks.flatMap((task) => task.suggestions);
+        setOverallSuggestions(allSuggestions);
+
+      } catch (error) {
+        console.error("Error fetching submitted tasks:", error);
+      }
+    };
+
+    fetchSubmittedTasks();
+  }, [userId]);
 
   return (
     <div className="min-h-screen bg-black text-gray-200 p-8 space-y-8">
@@ -75,14 +77,18 @@ function OverallResultPage() {
       <div className={`bg-gray-800 p-6 rounded-lg shadow-lg border ${borderColor} space-y-4`}>
         <h3 className={`text-2xl font-semibold ${themeColor} mb-2`}>Overall Suggestions</h3>
         <ul className="list-disc list-inside text-gray-300 text-sm">
-          {overallSuggestions.map((suggestion, index) => (
-            <li key={index}>{suggestion}</li>
-          ))}
+          {overallSuggestions.length > 0 ? (
+            overallSuggestions.map((suggestion, index) => (
+              <li key={index}>{suggestion}</li>
+            ))
+          ) : (
+            <li>No suggestions available.</li>
+          )}
         </ul>
       </div>
 
       <div className="space-y-4">
-        <h3 className={`text-2xl font-semibold ${themeColor} mb-4`}>Completed Tasks</h3>
+        <h3 className={`text-2xl font-semibold ${themeColor} mb-4`}>Submitted Tasks</h3>
         {tasks.map((task) => (
           <div key={task.id} className={`bg-gray-900 p-4 rounded-md shadow-md border ${borderColor} flex justify-between items-center`}>
             <div>
